@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
+from django.db.models import F, Q
+
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -51,3 +53,31 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class Follow(models.Model):
+    """
+    Model to represent a user following another user.
+    """
+    follower = models.ForeignKey(
+        User, 
+        related_name='following_links', 
+        on_delete=models.CASCADE
+    )
+    following = models.ForeignKey(
+        User, 
+        related_name='follower_links', 
+        on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Prevent duplicate follows and self-following at the database level
+        constraints = [
+            models.UniqueConstraint(fields=['follower', 'following'], name='unique_follow'),
+            models.CheckConstraint(condition=~Q(follower=F('following')), name='prevent_self_follow')
+        ]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.follower.email} follows {self.following.email}"
