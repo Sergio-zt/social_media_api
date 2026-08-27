@@ -3,9 +3,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
 
-from .models import Post, Comment
-from .serializers import PostSerializer, CommentSerializer
-from .permissions import IsAuthorOrReadOnly
+from posts.models import Post, Comment
+from posts.serializers import PostSerializer, CommentSerializer
+from posts.permissions import IsAuthorOrReadOnly
+
+from django.utils.dateparse import parse_datetime
+from posts.tasks import create_scheduled_post_task
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -94,6 +97,41 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        detail=False, methods=["post"], permission_classes=[permissions.IsAuthenticated]
+    )
+    def schedule(self, request):
+        """
+        Endpoint for creation scheduled posts thru API.
+        Expecting JSON: {"content": "Text", "scheduled_time": "2026-12-31T23:59:00Z"}
+        """
+        content = request.data.get("content")
+        scheduled_time_str = request.data.get("scheduled_time")
+
+        if not content or not scheduled_time_str:
+            return Response(
+                {"error": "Field 'content' and 'scheduled_time' required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        scheduled_time = parse_datetime(scheduled_time_str)
+        if not scheduled_time:
+            return Response(
+                {
+                    "error": "Wrong time forma. Use ISO 8601 (ex., YYYY-MM-DDThh:mm:ssZ)."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        create_scheduled_post_task.apply_async(
+            args=[request.user.id, content], eta=scheduled_time
+        )
+
+        return Response(
+            {"message": f"Post successfully scheduled for {scheduled_time}"},
+            status=status.HTTP_202_ACCEPTED,
+        )
 
 
 class CommentViewSet(
