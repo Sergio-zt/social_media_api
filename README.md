@@ -56,7 +56,7 @@ URL: http://127.0.0.1:8000/api/docs/
 Django Admin: http://127.0.0.1:8000/admin/
 
 🧪 Running Tests
-To execute the test suite inside the Docker container:
+**To execute the test suite inside the Docker container:**
     ```bash
     docker-compose exec web python manage.py test
     ```
