@@ -31,3 +31,16 @@ class PostApiTests(APITestCase):
         response = self.client.post("/api/content/posts/", payload)
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_single_post_success(self):
+        """Test: Any authenticated user can retrieve a single post by its ID"""
+        # Create post in DB
+        post = Post.objects.create(
+            author=self.user, content="Detailed post content for testing"
+        )
+
+        detail_url = f"/api/content/posts/{post.id}/"
+        response = self.client.get(detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["content"], "Detailed post content for testing")

@@ -5,12 +5,13 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 
 from users.serializers import UserRegistrationSerializer, UserSerializer
 from users.permissions import IsOwnerOrReadOnly
 
 from rest_framework.decorators import action
-from .models import Follow
+from users.models import Follow
 
 User = get_user_model()
 
@@ -74,8 +75,6 @@ class UserViewSet(
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     filter_backends = [filters.SearchFilter]
     search_fields = ["email", "bio"]
-
-    # --- НОВЫЙ КОД НИЖЕ ---
 
     @action(detail=True, methods=["post"])
     def follow(self, request, pk=None):
@@ -161,3 +160,22 @@ class UserViewSet(
 
         serializer = self.get_serializer(following_qs, many=True)
         return Response(serializer.data)
+
+
+class UserInfoView(APIView):
+    """
+    Endpoint for get user info.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk=None):
+        if pk is not None:
+            # If user id is present, getting info by id (or return 404)
+            target_user = get_object_or_404(User, pk=pk)
+        else:
+            # If ID not present, getting authenticated user info
+            target_user = request.user
+
+        serializer = UserSerializer(target_user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
