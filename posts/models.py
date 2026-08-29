@@ -47,9 +47,6 @@ class Comment(models.Model):
         return f"Comment {self.id} by {self.author.email} on Post {self.post.id}"
 
 
-from django.conf import settings
-
-
 class ScheduledPostRequest(models.Model):
     """
     Model for configure scheduled posts from admin.

@@ -119,7 +119,7 @@ class PostViewSet(viewsets.ModelViewSet):
         if not scheduled_time:
             return Response(
                 {
-                    "error": "Wrong time forma. Use ISO 8601 (ex., YYYY-MM-DDThh:mm:ssZ)."
+                    "error": "Wrong time format. Use ISO 8601 (ex., YYYY-MM-DDThh:mm:ssZ)."
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )

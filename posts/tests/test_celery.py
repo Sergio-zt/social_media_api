@@ -16,7 +16,7 @@ class ScheduledPostApiTests(APITestCase):
         self.client.force_authenticate(user=self.user)
         self.schedule_url = "/api/content/posts/schedule/"
 
-    @patch('posts.views.create_scheduled_post_task.apply_async')
+    @patch("posts.views.create_scheduled_post_task.apply_async")
     def test_schedule_post_endpoint(self, mock_task):
         """The endpoint successfully accepts the payload and calls the Celery task"""
         payload = {
